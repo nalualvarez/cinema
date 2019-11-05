@@ -20,47 +20,48 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-int FILMES = 10;
-int SALAS = 5;
-int CAPACIDADE = 50;
-int PESSOAS = 1000;
+const int FILMES = 10;
+const int SALAS = 5;
+const int CAPACIDADE = 50;
+const int PESSOAS = 1000;
 
 
-typedef struct{ //tipo de variavel com nome e veotr de quais filmes a pessoa ja viu (indice do vetor recebe: 1 = viu, 0 = nao viu)
-	char nome[20];
-	int filmes[FILMES];
-} Pessoa;
+int assistidos[FILMES][PESSOAS]; //VETOR DE PESSOAS DE VETORES DE FILMES ASSISTIDOS
 
-Pessoa todos[PESSOAS];
+typedef struct {
+	int id
+	int quantidade;
+	int filmepassando;
+}sala;
 
-void assiste (){
+sala passando[SALAS];
+
+void pessoa (){
 	
 }
 
-int passafilme(){ //gera randomicamente qual filme vai ser passado
-	int vaipassar;
-	vaipassar = rand()%FILMES;
-	return vaipassar;
+void sala (){
+	int filme;
+	
+	filme = rand()%FILMES; //gera randomicamente qual filme vai ser passado
 }
-
-
 
 int main(){
 	
 	int i, j;
 	
-	//zera vetor de filmes assistidos
+	pthread_t threadp[PESSOAS];
+	pthread_t threads[SALAS];
+	
 	for (i=0; i<PESSOAS; i++){
-		for(j=0;j<FILMES;j++)
-		todos[i].filmes[j] = 0;
+		pthread_create(&threadp[i], NULL, pessoa, (void*)i);
 	}
 	
-	while(1){ //roda direto pegando sala randomicamente + filme randomicamente e testa se as pessoas ja assistiram
-		for ()
+	for (j=0; j<SALAS; j++){
+		pthread_create(&threads[j], NULL, sala, (void*)j);
 	}
 	
-	
-	
+			
 	return 0;
 
 }
