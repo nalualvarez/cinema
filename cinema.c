@@ -1,4 +1,5 @@
-// Autores: Ana Luísa Salvador Alvarez 160048036 e Gabriel Rocha Fontenele 150126760
+// Autor: Ana Luísa Salvador Alvarez 160048036
+// Autor: Gabriel Rocha Fontenele 150126760
 // Atividade: Trabalho Prático
 
 // CINEMA
@@ -13,57 +14,49 @@
 // Se achar e sala nao estiver cheia, entra na secao.
 // Se achar e sala estiver cheia, procura por outro filme que ainda nao viu.
 
-
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
 #include <semaphore.h>
 
-const int FILMES = 10;
-const int SALAS = 5;
-const int CAPACIDADE = 50;
-const int PESSOAS = 1000;
+const int N_FILMES = 10;
+const int N_SALAS = 5;
+const int N_CAPACIDADE = 50;
+const int N_PESSOAS = 1000;
 
-
-int assistidos[FILMES][PESSOAS]; //VETOR DE PESSOAS DE VETORES DE FILMES ASSISTIDOS
+int assistido[N_PESSOAS][N_FILMES];
 
 typedef struct {
-	int id
 	int quantidade;
-	int filmepassando;
-}sala;
-
-sala passando[SALAS];
-
-void pessoa (){
-	
-}
-
-void sala (){
 	int filme;
-	
-	filme = rand()%FILMES; //gera randomicamente qual filme vai ser passado
+} s_sala;
+
+s_sala sala[N_SALAS];
+
+void pessoa () {
 }
 
-int main(){
-	
-	int i, j;
-	
-	pthread_t threadp[PESSOAS];
-	pthread_t threads[SALAS];
-	
-	for (i=0; i<PESSOAS; i++){
-		pthread_create(&threadp[i], NULL, pessoa, (void*)i);
+void secao () {
+	int filme;
+	filme = rand() % N_FILMES;
+}
+
+int main() {
+	pthread_t thread_p[N_PESSOAS];
+	pthread_t thread_s[N_SALAS];
+
+	for (long int i = 0; i < N_PESSOAS; i++) {
+		pthread_create(&thread_p[i], NULL, pessoa, (void*)i);
 	}
-	
-	for (j=0; j<SALAS; j++){
-		pthread_create(&threads[j], NULL, sala, (void*)j);
+	for (long int i = 0; i < N_SALAS; i++) {
+		pthread_create(&thread_s[i], NULL, secao, (void*)i);
 	}
-	
-			
+
+	for (long int i = 0; i < N_PESSOAS; i++)
+		pthread_join(thread_p[i], NULL);
+	for (long int i = 0; i < N_SALAS; i++)
+		pthread_join(thread_s[i], NULL);
+
 	return 0;
-
 }
-
-
