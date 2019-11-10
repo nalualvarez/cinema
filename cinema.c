@@ -23,46 +23,86 @@
 
 #define N_FILMES 10
 #define N_SALAS 5
-#define N_CAPACIDADE 50
+#define CAPACIDADE 50
 #define N_PESSOAS 1000
 
 pthread_mutex_t gerenciar_sala;
+pthread_mutex_t gerenciar_secao;
 
-int sala_estado[N_SALAS];			// quantidade de pessoas dentro da sala
-int filme_estado[N_FILMES];			// valor 1 se filme esta sendo exibido em alguma sala
-int pessoa_assistiu[N_PESSOAS][N_FILMES];	// pessoa [] ja assistiu filme [] = 1
+typedef struct {
+    int assistido[N_FILMES];    // valor 1 se filme[i] ja foi assistido por pessoa
+    int contagem;               // numero de filmes ja assistidos
+} s_pessoa;
 
-void* pessoa () {
+typedef struct {
+    int exibicao;       // valor 1 se filme estiver sendo exibido
+    int sala;           // sala em que filme esta sendo exibido
+} s_filme;
+
+typedef struct {
+    int exibicao;       // valor 1 se sala estiver em secao
+    int quantidade;     // quantidade de pessoas dentro da sala
+} s_sala;
+
+s_pessoa pessoa_estado[N_PESSOAS];          // estado de cada pessoa no cinema
+s_filme filme_estado[N_FILMES];             // estado de cada filme em cartaz
+s_sala sala_estado[N_SALAS];                // estado de cada sala no cinema
+int pessoa_assistiu[N_PESSOAS][N_FILMES];   // pessoa [] ja assistiu filme [] = 1
+
+void* pessoa (void* id) {
+    int tid = (long int)id;
+    int filme, sala_id;
+
+    // escolhe um filme aleatoriamente
+    srand(time(NULL));
+    filme = rand() % N_FILMES;
+
+    if (pessoa_estado[tid].assistido[filme] == 0) {
+        sala_id = filme_estado[filme].sala;
+        pthread_mutex_lock(&gerenciar_sala);
+        
+        if ((sala_estado[sala_id].exibicao == 1) && (sala_estado[sala_id].quantidade < CAPACIDADE)) {
+            sala_estado[sala_id].quantidade++;
+            pessoa_estado[tid].assistido[filme] == 1;
+        } pthread_mutex_unlock(&gerenciar_sala);
+    }
 }
 
 void* sala (void* id) {
     int tid = (long int)id;
-    int loop = 1;
-
     int filme;
-    do {
-	// escolhe um filme aleatoriamente
+
+    int loop = 1;
+    while (loop) {
+
+	    // escolhe um filme aleatoriamente
         srand(time(NULL));
     	filme = rand() % N_FILMES;
         
-	// verifica se filme esta sendo exibido em alguma sala 
-        pthread_mutex_lock(&gerenciar_sala);
-        if (filme_estado[filme] == 0) {		// se filme nao esta sendo exibido
-            filme_estado[filme] = 1;		// exibir filme na sala atual
+	    // verifica se filme esta sendo exibido em alguma sala 
+        pthread_mutex_lock(&gerenciar_secao);
+        if (filme_estado[filme].exibicao == 0) {    // se filme nao esta sendo exibido
+            filme_estado[filme].exibicao = 1;       // exibir filme na sala atual
+            filme_estado[filme].sala = tid;
             loop = 0;
-        } pthread_mutex_unlock(&gerenciar_sala);
-    } while (loop);
+        } pthread_mutex_unlock(&gerenciar_secao);
+    }
 
     // tempo de exibicao do filme
-    printf("Sala %d exibindo filme %d\n", tid+1, filme+1);
-    srand(time(NULL));
-    sleep(rand()%10);
+    printf("INI %d : %d\n", tid+1, filme+1);
+    // printf("Sala %d comecou a exibir o filme %d\n", tid+1, filme+1);
+    int duracao = 0;
+    while (duracao < 5) {
+        srand(time(NULL));
+        duracao = rand()%10;
+    } sleep(duracao);
 
     // termina exibicao do filme na sala atual
-    pthread_mutex_lock(&gerenciar_sala);
-    filme_estado[filme] = 0;
-    printf("Fim da exibicao do filme %d\n", filme+1);
-    pthread_mutex_unlock(&gerenciar_sala);
+    pthread_mutex_lock(&gerenciar_secao);
+    filme_estado[filme].exibicao = 0;
+    printf("FIM %d : %d\n", tid+1, filme+1);
+    // printf("Sala %d terminou a exibicao do filme %d\n", tid+1, filme+1);
+    pthread_mutex_unlock(&gerenciar_secao);
 }
 
 int main() {
@@ -70,6 +110,7 @@ int main() {
 	pthread_t thread_s[N_SALAS];
 
     pthread_mutex_init(&gerenciar_sala, NULL);
+    pthread_mutex_init(&gerenciar_secao, NULL);
 
 	for (long int i = 0; i < N_PESSOAS; i++) {
 		pthread_create(&thread_p[i], NULL, pessoa, (void*)i);
@@ -83,6 +124,7 @@ int main() {
 	for (long int i = 0; i < N_SALAS; i++)
 		pthread_join(thread_s[i], NULL);
 
+    pthread_mutex_destroy(&gerenciar_secao);
     pthread_mutex_destroy(&gerenciar_sala);
 
 	return 0;
